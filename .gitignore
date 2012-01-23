@@ -1,0 +1,16 @@
+.cache
+.target
+.classpath
+.project
+.history
+.lib
+.settings
+.scala_dependencies
+target/
+test-out/
+*.swp
+.idea/
+out/
+._.DS_Store
+
+

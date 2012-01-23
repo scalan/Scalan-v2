@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="scala" name="Scala">
+      <configuration>
+        <option name="compilerLibraryLevel" value="Global" />
+        <option name="compilerLibraryName" value="nightly-scala-virtualized" />
+        <option name="compilerOptions" value="-Xlog-implicits" />
+        <option name="deprecationWarnings" value="true" />
+        <option name="explainTypeErrors" value="true" />
+        <option name="maximumHeapSize" value="1536" />
+        <option name="uncheckedWarnings" value="true" />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/src/scalan/expr" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="nightly-scala-virtualized" level="application" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
+
