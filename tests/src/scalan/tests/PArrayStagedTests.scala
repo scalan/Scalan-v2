@@ -9,15 +9,14 @@ import scalan.staged.{ScalanStaged, ScalanExportGraph}
 import scalan.samples.DslSamples
 import scalan.util.DocumentExtensions._
 
-trait PArrayStagedTestBase extends FileDiffSuite with DslSamples {
-  val scln = new ScalanStaged with ScalanExportGraph { override val isDebug = false }
-  import scln._
-  val prefix: String
+trait PArrayStagedTestBase extends StagedTestsBase {
+  val samples = new DslSamples with TestScalan
+  import samples._
 }
 
 class PArrayStagedTests extends PArrayStagedTestBase {
   val prefix = "test-out/PArrayStagedTests/"
-  import scln._
+  import samples._
 
   @Test def dslSamples = {
 

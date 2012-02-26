@@ -2,9 +2,7 @@ package scalan.tests
 
 import scalan.staged.{ScalanExportGraph, ScalanStaged}
 
-trait ScalanSamples {
-  val scln: ScalanStaged
-  import scln._
+trait ScalanSamples extends ScalanStaged {
 
   val idFunc = (x: Rep[Int]) => x
   val incFunc = (x: Rep[Int]) => x + 1
@@ -35,7 +33,6 @@ trait ScalanSamples {
 }
 
 trait ScalanSampleSymbols extends ScalanSamples {
-  import scln._
 
   lazy val id = mkLambda(idFunc)
   lazy val inc = mkLambda(incFunc)

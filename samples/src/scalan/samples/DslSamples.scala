@@ -1,11 +1,8 @@
 package scalan.samples
 
 import scalan.dsl._
-//import scalan.samples.HLanguage.CaseExpression
 
-trait DslSamples {
-  val scln: Scalan
-  import scln._
+trait DslSamples extends Scalan {
 
   def odd(x: Rep[Int]) = !(x % toRep(2) == toRep(0))
 

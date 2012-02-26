@@ -9,7 +9,7 @@ import Is._
 import scalan.util.{DocumentExtensions => PA}
 import scalan.samples._
 import org.junit.{Assert, Test}
-import scalan.staged.ScalanStaged
+//import scalan.staged.ScalanStaged
 
 //object StagedArrays extends ScalanStaged
 object SeqArrays extends ScalanSequential
@@ -18,9 +18,9 @@ object SeqArrays extends ScalanSequential
 //TODO implement remaining primitives
 //TODO get rid of code duplication in different PA implementations (employ scala collections pattern)
 
-class PArraysSeqTests extends DslSamples {
-  val scln = new ScalanSequential { override val isDebug = false }
-  import scln._
+class PArraysSeqTests  {
+  val samples = new ScalanSequential with DslSamples { override val isDebug = false }
+  import samples._
 
   @Test def pairsNestedReplicate = {
     val arr = replicate(3, ((1,2),3))

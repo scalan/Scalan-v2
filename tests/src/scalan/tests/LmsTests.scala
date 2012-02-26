@@ -10,10 +10,10 @@ import scalan.staged.{ScalanExportGraph, ScalanStaged, StagedImplementation}
 /**
  * Tests that specify behavior of virtualized Scala and LMS core library we rely on
  */
-class LmsTests extends FileDiffSuite with ScalanSamples { //extends ScalaOpsPkgExp {
-  val scln = new ScalanStaged with ScalanExportGraph { override val isDebug = false }
-  val prefix = "test-out/LmsTests/"
-  import scln._
+class LmsTests extends StagedTestsBase  { //extends ScalaOpsPkgExp {
+  override val prefix = "test-out/LmsTests/"
+  val samples = new ScalanSamples with TestScalan
+  import samples._
 
   @Test def Equality_of_Exp = {
     val x: Exp[Int] = toRep(10)

@@ -19,7 +19,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" name="nightly-scala-virtualized" level="application" />
-    <orderEntry type="library" name="junit-4.10" level="project" />
     <orderEntry type="module" module-name="scalan" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

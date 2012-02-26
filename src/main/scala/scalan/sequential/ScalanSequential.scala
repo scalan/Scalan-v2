@@ -61,6 +61,7 @@ trait ScalanSequential
   extends Scalan
   with SeqImplBase
   with SeqImplementation
+  with SeqViews
   with SeqTreeImplementation
   with SeqStrings
   with SeqArithmetic

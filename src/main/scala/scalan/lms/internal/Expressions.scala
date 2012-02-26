@@ -137,6 +137,8 @@ trait Expressions { self: ArraysBase =>
 
   def rewrite[T](d: Def[T]): Def[_] = d
 
+  //def build
+
   implicit def toExp[T](d: Def[T])(implicit et: Elem[T]): Exp[T] = {
     findDefinition(d) match {
       case Some(TP(s, _)) => s

@@ -13,7 +13,8 @@
 java.util.concurrent.ExecutionException: java.lang.OutOfMemoryError: PermGen space
 
 Run with options like this
-env JAVA_OPTS="-Xmx1024m" sbt
+	
+	env JAVA_OPTS="-Xmx1024m" sbt
 
 
 
