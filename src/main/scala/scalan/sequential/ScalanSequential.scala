@@ -62,6 +62,7 @@ trait ScalanSequential
   with SeqImplBase
   with SeqImplementation
   with SeqViews
+  //with SeqViewScalan
   with SeqTreeImplementation
   with SeqStrings
   with SeqArithmetic

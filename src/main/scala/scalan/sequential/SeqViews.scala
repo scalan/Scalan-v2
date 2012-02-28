@@ -6,6 +6,9 @@ import scalan.util.Utils._
 
 trait SeqViews extends PViews { self: SeqImplementation =>
 
+  type Iso[A,B] = IsoBase[A,B]
+  //trait SeqIso[A,B] extends IsoBase[A,B]
+
   override implicit def viewElement[A,B](implicit iso: Iso[A,B], ea: Elem[A]): Elem[B] =
     new SeqElement[B] {
       implicit val elemB = this
@@ -40,6 +43,7 @@ trait SeqViews extends PViews { self: SeqImplementation =>
   {
     override val elem = eB
 
+    def index(i: IntRep) = iso.to(a(i))
     def map[R:Elem](f: B => R): PA[R] = {
       val len = length
       element[R].tabulate(len)(i => f(iso.to(a(i))))

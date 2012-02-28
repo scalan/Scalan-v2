@@ -5,6 +5,7 @@ import virtualization.lms.ppl._
 trait Scalan extends ArraysBase
                 with Arrays
                 with ScalanEqual
+                with PViews
                 //with PTrees
                 with ScalanStrings
                 with ScalanArithmetic

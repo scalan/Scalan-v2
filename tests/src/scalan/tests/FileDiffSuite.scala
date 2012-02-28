@@ -5,7 +5,7 @@ import org.junit.runners.Suite
 
 
 trait FileDiffSuite  {
-  
+
   def withOutFile(name: String)(func: => Unit): Unit = {
     val file = new File(name)
     file.getParentFile.mkdirs()

@@ -8,7 +8,9 @@ trait StagedTestsBase extends FileDiffSuite {
 
   trait TestScalan extends ScalanStaged with ScalanExportGraph {
     def emitGraph(x: Rep[_], name: String){
-      emitDepGraph(x, prefix + name, false)
+      withOutFile(prefix + name + ".txt") {
+        emitDepGraph(x, prefix + name + ".dot", false)
+      }
     }
   }
 }

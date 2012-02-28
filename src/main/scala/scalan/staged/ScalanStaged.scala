@@ -5,11 +5,11 @@ import virtualization.lms.common.{IfThenElsePureExp, EqualExp}
 import scalan.dsl.{ScalanIfThenElse, ScalanEqual, Scalan, Arrays}
 
 
-
 trait ScalanStaged
   extends Scalan
   with StagedImplementation
   with StagedEqual
+  with StagedViews
   //with StagedTreeImplementation
   with StagedStrings
   //with StagedArithmetic
