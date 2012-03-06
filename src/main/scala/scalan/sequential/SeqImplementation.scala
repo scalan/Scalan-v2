@@ -12,19 +12,19 @@ import scalan.dsl._
 
 trait SeqImplementation extends SeqImplBase {
   override implicit lazy val boolElement:  Elem[Boolean] =
-    new SeqStdElement[Boolean]()(implicitly[Semigroup[Boolean]], Zero.BooleanZero, manifest[Boolean])
+    new SeqBaseElement[Boolean]()(implicitly[Semigroup[Boolean]], Zero.BooleanZero, manifest[Boolean])
 
   override implicit lazy val intElement:   Elem[Int] =
-    new SeqStdElement[Int]()(implicitly[Semigroup[Int]], Zero.IntZero, manifest[Int])
+    new SeqBaseElement[Int]()(implicitly[Semigroup[Int]], Zero.IntZero, manifest[Int])
 
   override implicit lazy val floatElement: Elem[Float] =
-    new SeqStdElement[Float]()(implicitly[Semigroup[Float]], Zero.FloatZero, manifest[Float])
+    new SeqBaseElement[Float]()(implicitly[Semigroup[Float]], Zero.FloatZero, manifest[Float])
 
   override implicit lazy val stringElement:Elem[String] =
-    new SeqStdElement[String]()(implicitly[Semigroup[String]], Zero.StringZero, manifest[String])
+    new SeqBaseElement[String]()(implicitly[Semigroup[String]], Zero.StringZero, manifest[String])
 
   override implicit def arrayElement[A: Manifest]: Elem[Array[A]] =
-    new SeqStdElement[Array[A]]()(implicitly[Semigroup[Array[A]]], Zero.ArrayZero, manifest[Array[A]])
+    new SeqBaseElement[Array[A]]()(implicitly[Semigroup[Array[A]]], Zero.ArrayZero, manifest[Array[A]])
 
   override implicit lazy val unitElement:  Elem[Unit] = new UnitElement
 
@@ -42,7 +42,7 @@ trait SeqImplementation extends SeqImplBase {
   def mkNestedArray[A](arr: PA[A], segments: PA[(Int, Int)])
                       (implicit ea: Elem[A]): PA[PA[A]] = new SeqNestedArray[A](arr, segments)
 
-  class SeqStdElement[T](implicit s: Semigroup[T], z: Zero[T], m: Manifest[T]) extends StdElem[T] with SeqElement[T] {
+  class SeqBaseElement[T](implicit s: Semigroup[T], z: Zero[T], m: Manifest[T]) extends BaseElem[T] with SeqElement[T] {
     implicit lazy val elemT = this
     def manifest: Manifest[T] = m
     def zero = z

@@ -139,7 +139,7 @@ import scala.collection._
 //    def resolveTransformer[A](e: Elem[A]): Transformer[A] = e match {
 //      case p: PairElem[_,_] => pairTransformer(resolveTransformer(p.ea), resolveTransformer(p.eb))
 //      case f: FuncElem[_,_] => funcTransformer(resolveTransformer(f.ea), resolveTransformer(f.eb))
-//      case s: StdElem[_]    => stdTransformer(s)
+//      case s: BaseElem[_]    => stdTransformer(s)
 //      case u: UnitElement   => stdTransformer(u)
 //    }
 //

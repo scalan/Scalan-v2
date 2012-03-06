@@ -23,7 +23,7 @@ trait SeqViews extends PViews { self: SeqImplementation =>
 
       def replicateSeg(count: IntRep, v: PA[B]) = {
         val va = v.asInstanceOf[ViewArray[A,B]]
-        SeqViewArray(ea.replicateSeg(count, va.a), iso)
+        SeqViewArray(ea.replicateSeg(count, va.arr), iso)
       }
 
       def tabulate(len: IntRep)(f:IntRep => B) = {
@@ -31,38 +31,38 @@ trait SeqViews extends PViews { self: SeqImplementation =>
         SeqViewArray(arr, iso)
       }
       def tabulateSeg(len: IntRep)(f:IntRep => PA[B]) = {
-        val fa = (i:IntRep) => { val segB = f(i); segB.asInstanceOf[ViewArray[A,B]].a }
+        val fa = (i:IntRep) => { val segB = f(i); segB.asInstanceOf[ViewArray[A,B]].arr }
         val arr = ea.tabulateSeg(len)(fa)
         SeqViewArray(arr, iso)
       }
       def empty = SeqViewArray(ea.empty, iso)
     }
 
-  case class SeqViewArray[A, B](a: PArray[A], iso: Iso[A,B])(implicit eA: Elem[A], eB:Elem[B])
+  case class SeqViewArray[A, B](arr: PArray[A], iso: Iso[A,B])(implicit eA: Elem[A], eB:Elem[B])
     extends ViewArray[A,B] with SeqPArray[B]
   {
     override val elem = eB
 
-    def index(i: IntRep) = iso.to(a(i))
+    def index(i: IntRep) = iso.to(arr(i))
     def map[R:Elem](f: B => R): PA[R] = {
       val len = length
-      element[R].tabulate(len)(i => f(iso.to(a(i))))
+      element[R].tabulate(len)(i => f(iso.to(arr(i))))
     }
 
-    def slice(start: IntRep, len: IntRep) = SeqViewArray(a.slice(start, len), iso)
+    def slice(start: IntRep, len: IntRep) = SeqViewArray(arr.slice(start, len), iso)
 
     override def flagCombine(ifFalse: PA[B], flags: PA[Boolean]) = ifFalse.asInstanceOf[SeqViewArray[A,B]] match {
-      case SeqViewArray(falseA, iso) => SeqViewArray(a.flagCombine(falseA, flags), iso)
+      case SeqViewArray(falseA, iso) => SeqViewArray(arr.flagCombine(falseA, flags), iso)
       case _ => sys.error("SeqPairArray expected by was" + ifFalse)
     }
 
     // length(this) + length(ifFalse) == length(flags)
     def flagMerge(ifFalse: PA[B], flags: PA[Boolean]) = ifFalse.matchType {
-      (arr: SeqViewArray[A,B]) => SeqViewArray(a.flagMerge(arr.a, flags), iso)
+      (a: SeqViewArray[A,B]) => SeqViewArray(arr.flagMerge(a.arr, flags), iso)
     }
 
     def flagSplit  (flags: PA[Boolean]) = { // length(this) == length(flags) == (length(A) + length(B))
-      val (at,af) = a.flagSplit(flags)
+      val (at,af) = arr.flagSplit(flags)
       (SeqViewArray(at,iso), SeqViewArray(af,iso))
     }
   }

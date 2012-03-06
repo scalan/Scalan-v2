@@ -28,10 +28,10 @@ trait StagedStdArrayOps extends ScalanStdArrayOps
   case class ArrayScan[T](x: Exp[Array[T]], implicit val m: Monoid[T]) extends ArrayDef[T]
 
   def matchArrayConst(arrSym: Exp[_])
-                     (ai: Array[Int] => Def[_])
-                     (af: Array[Float] => Def[_])
-                     (ab: Array[Boolean] => Def[_])
-                     (orElse: => Def[_]): Def[_] = arrSym match {
+                     (ai: Array[Int] => Exp[_])
+                     (af: Array[Float] => Exp[_])
+                     (ab: Array[Boolean] => Exp[_])
+                     (orElse: => Exp[_]): Exp[_] = arrSym match {
     case Def(arr) => arr match {
       case Const(x) if x.isInstanceOf[Array[Int]] => ai(x.asInstanceOf[Array[Int]])
       case Const(x) if x.isInstanceOf[Array[Float]] => af(x.asInstanceOf[Array[Float]])
@@ -41,7 +41,7 @@ trait StagedStdArrayOps extends ScalanStdArrayOps
     case _ => orElse
   }
 
-  // from SeqStdElement.replicateSeg
+  // from SeqBaseElement.replicateSeg
   def tabulate[A:Manifest](len: Int, seg: Array[A]): Array[A] = {
     val vlen = seg.length
     Array.tabulate(len * vlen)(i => seg(i % vlen))
@@ -65,7 +65,7 @@ trait StagedStdArrayOps extends ScalanStdArrayOps
     val scanned = scan(arr)
     m.append(scanned(last), arr(last))
   }
-  override def rewrite[T](d: Def[T]): Def[_] = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
     case ArrayLength(Def(ArrayScan(arr, _))) =>  ArrayLength(arr)
     case ArrayLength(arrSym: Exp[_]) => matchArrayConst(arrSym)
         { x => Const(x.length) }

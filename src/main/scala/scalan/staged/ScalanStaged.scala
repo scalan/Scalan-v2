@@ -1,15 +1,16 @@
 package scalan.staged
 
 import reflect.Manifest
-import virtualization.lms.common.{IfThenElsePureExp, EqualExp}
-import scalan.dsl.{ScalanIfThenElse, ScalanEqual, Scalan, Arrays}
-
+import scalan.lms.common.ProxyExp
+import scalan.dsl.Scalan
 
 trait ScalanStaged
   extends Scalan
   with StagedImplementation
   with StagedEqual
   with StagedViews
+ // with DomainTypes
+  with ProxyExp
   //with StagedTreeImplementation
   with StagedStrings
   //with StagedArithmetic

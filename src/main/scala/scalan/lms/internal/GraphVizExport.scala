@@ -19,14 +19,17 @@ trait GraphVizExport extends Expressions with Scheduling { self: ArraysBase =>
     }
   }
 
+  def emitDepGraph(d: Def[Any], file: String, landscape: Boolean): Unit =
+    emitDepGraph(dep(d), file, landscape)
   def emitDepGraph(start: Exp[Any], file: String, landscape: Boolean = false): Unit =
-    emitDepGraph(start, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
+    emitDepGraph(List(start), file, landscape)
+  def emitDepGraph(ss: List[Exp[Any]], file: String, landscape: Boolean): Unit =
+    emitDepGraph(ss, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
 
-  def emitDepGraph(start: Exp[Any], stream: PrintWriter, landscape: Boolean): Unit = {
-
+  def emitDepGraph(ss: List[Exp[Any]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")
 
-    val deflist = buildScheduleForResult(start)
+    val deflist = buildScheduleForResult(ss map { (_.asInstanceOf[Sym[Any]]) })
 
     landscape match {
       case true => stream.println("rankdir=LR")

@@ -1,33 +1,18 @@
 package scalan.tests
 
-import scalan.common.Common
-import Common._
-import org.hamcrest._
-import core._
-import Is._
-import org.junit.{Assert, Test}
-import Assert._
+import org.junit.Test
 import scalan.samples.{StagedSampleImplicits, StagedViewSamples}
-import scalan.staged.{ScalanStaged, StagedContext, ScalanExportGraph}
 
-class StagedViewTests extends FileDiffSuite {//extends StagedTestsBase {
-  val samples = new StagedViewSamples with StagedSampleImplicits with StagedContext {
-    lazy val scalan = new ScalanStaged with ScalanExportGraph { override val isDebug = false   }
-  }
-  import samples._
+
+class StagedViewTests extends TestContext
+  with StagedViewSamples
+  with StagedSampleImplicits
+{
   import scalan._
-
   val prefix = "test-out/StagedViewTests/"
 
-  def emitGraph(x: Rep[_], name: String){
-    withOutFile(prefix + name + ".txt") {
-      emitDepGraph(x, prefix + name + ".dot", false)
-    }
-  }
-
   @Test def pointTests() {
-
-    val points = replicate(2, Point(10, 10))
+    val points = replicate(2, Point(10, 20))
     emitGraph(points, "points")
 
     val zipped = points zip points
@@ -38,6 +23,11 @@ class StagedViewTests extends FileDiffSuite {//extends StagedTestsBase {
     }
     emitGraph(dp, "dp")
 
+    val dpFunc = mkLambda((_: PA[Point]) map {
+      p => ExpPoint(p.x + 1, p.y + 1)
+    })
+    emitGraph(dpFunc, "dpFunc")
+
     val nested = replicate(2, points)
     emitGraph(nested, "nested")
 
@@ -45,7 +35,7 @@ class StagedViewTests extends FileDiffSuite {//extends StagedTestsBase {
     emitGraph(values, "values")
 
     val nested2 = replicate(2, nested)
-    emitGraph(nested2, "nested")
+    emitGraph(nested2, "nested2")
   }
 //
 //  case class Circle(loc: Point, r: Int)

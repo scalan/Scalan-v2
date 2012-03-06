@@ -29,6 +29,7 @@ trait ArraysBase extends ScalanBase
   type LongRep = Rep[Long]
   type FloatRep = Rep[Float]
   type DoubleRep = Rep[Double]
+  type NArray[A] = PArray[PArray[A]]
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   trait Element[A] {
@@ -48,7 +49,20 @@ trait ArraysBase extends ScalanBase
       tabulate(arr.length)(i => arr(i))
     }
     def toRep(x: A): Rep[A]
+    
+    //Element.bindWithManifest(manifest, this)
   }
+//  object Element {
+//    def fromManifest[A](m: Manifest[A]): Elem[A] = {
+//      _m2elem.getOrElse(m, { ???("Cannot find element for Manifest " + m) }).asInstanceOf[Elem[A]]
+//    }
+//
+//    private val _m2elem = scala.collection.mutable.Map[Manifest[_], Elem[_]]()
+//
+//    private def bindWithManifest[A](m: Manifest[A], e: Elem[A]) {
+//      _m2elem.contains(m) match { case true => _m2elem += (m -> e) case _ => }
+//    }
+//  }
 
   trait PArray[T] {
     def length: IntRep
@@ -88,10 +102,6 @@ trait ArraysBase extends ScalanBase
     def toDoc: Document = text(toString)
 
     implicit val elem: Elem[T]
-  }
-
-
-  trait StdElem[A] extends Element[A] {
   }
 
   def emptyArrayOf[T:Elem] = element[T].empty
@@ -203,6 +213,7 @@ trait ArraysBase extends ScalanBase
       :: ")" :: ED)
   }
 
+  abstract class BaseElem[A] extends Element[A]
   abstract class PairElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A,B)]
   abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
   abstract class PArrayElem[A](val ea: Elem[A]) extends Element[PArray[A]]

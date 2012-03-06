@@ -7,6 +7,7 @@ import virtualization.lms.internal.Expressions
 import virtualization.lms.ppl.ScalaOpsPkgExp
 import virtualization.lms.common.{ScalaGenEffect, FunctionsExp}
 import java.io.PrintWriter
+import reflect.SourceContext
 
 trait StagedImplementation extends StagedImplBase
                               with Expressions
@@ -18,31 +19,31 @@ trait StagedImplementation extends StagedImplBase
                               with ScalaOpsPkgExp
 { outer =>
   override implicit lazy val boolElement:  Elem[Boolean] =
-    new StagedStdElement[Boolean]()(
+    new StagedBaseElement[Boolean]()(
       implicitly[Semigroup[Boolean]], Zero.BooleanZero, manifest[Boolean])
 
   override implicit lazy val intElement:   Elem[Int] =
-    new StagedStdElement[Int]()(
+    new StagedBaseElement[Int]()(
       implicitly[Semigroup[Int]], Zero.IntZero, manifest[Int])
 
   override implicit lazy val floatElement: Elem[Float] =
-    new StagedStdElement[Float]()(
+    new StagedBaseElement[Float]()(
       implicitly[Semigroup[Float]], Zero.FloatZero, manifest[Float])
 
   override implicit lazy val stringElement:Elem[String] =
-    new StagedStdElement[String]()(
+    new StagedBaseElement[String]()(
       implicitly[Semigroup[String]], Zero.StringZero, manifest[String])
 
   implicit def arrayElement[A](implicit m: Manifest[A]): Elem[Array[A]] =
-    new StagedStdElement[Array[A]]()(
+    new StagedBaseElement[Array[A]]()(
       implicitly[Semigroup[Array[A]]], Zero.ArrayZero(m), manifest[Array[A]]) {
       override def toRep(x: Array[A]) = Const(x)//ArrayConst(Const(x))
     }
 
   override implicit lazy val unitElement:  Elem[Unit] = new UnitElement
 
-  class StagedStdElement[A](implicit s: Semigroup[A], override val zero:Zero[A], m:Manifest[A])
-    extends StdElem[A] with StagedElement[A]
+  class StagedBaseElement[A](implicit s: Semigroup[A], override val zero:Zero[A], m:Manifest[A])
+    extends BaseElem[A] with StagedElement[A]
   {
     implicit val elemA = this
     def manifest: Manifest[A] = m
@@ -58,7 +59,7 @@ trait StagedImplementation extends StagedImplBase
     }
     def tabulate(len: IntRep)(f:IntRep => Rep[A]) = mkStdArray(len)(f)
     def tabulateSeg(len: IntRep)(f:IntRep => PA[A]) =
-      ExpStdArray(ArrayConcat(ArrayTabulate(len, mkLambda((i:IntRep) => f(i).toArray))))
+      ExpStdArray(ArrayConcat(ArrayTabulate(len, fun {(i:IntRep) => f(i).toArray})))
     def empty = replicate(outer.toRep(0), toRep(mzero[A]))
     def toRep(x: A) = Const(x)
   }
@@ -139,7 +140,8 @@ trait StagedImplementation extends StagedImplBase
             }
             else
             {
-              val arr = ea.replicate(Z, ea.toRep(ea.defaultOf))
+              //val arr = ea.replicate(Z, ea.toRep(ea.defaultOf))
+              val arr = ea.empty
               val segments = segElem.replicate(count, segElem.toRep((0,0)))
               ExpNestedArray(arr, segments)
             }
@@ -147,7 +149,7 @@ trait StagedImplementation extends StagedImplBase
         case _ => ReplicatePA(count, v)
       }
 
-      def replicateSeg(count: IntRep, v: PA[PArray[A]]): PA[PArray[A]] = ???
+      def replicateSeg(count: IntRep, v: PA[PArray[A]]): PA[PArray[A]] = ReplicateSegPA(count, v)
 //      {
 //        if (count == 0) return empty
 //        val segLen = v.length
@@ -336,7 +338,7 @@ trait StagedImplementation extends StagedImplBase
     override def toString = "UnitArray(" + len.toString + ")"
   }
 
-  case class ExpIfArray[A](cond: BoolRep, thenp: PA[A], elsep: PA[A])(implicit  ea: Elem[A])
+  case class ExpIfArray[A](cond: BoolRep, thenp: PA[A], elsep: PA[A])(implicit val eA: Elem[A])
      extends StagedArrayBase[A]
   {
     override val elem = thenp.elem
@@ -510,6 +512,9 @@ trait StagedImplementation extends StagedImplBase
      extends StagedArrayBase[A]
         with StubArray[A]
   {
+    override lazy val elem = element[A]
+    implicit def mA = elem.manifest
+
     protected def createStub(source: PA[A]): PA[A] = {
       var eA = element[A]
       eA match {
@@ -526,10 +531,12 @@ trait StagedImplementation extends StagedImplBase
     }
 
     def arr = createStub(this)
-    override lazy val elem = element[A]
     def length = LengthPA(arr)
     def index(i: IntRep) = IndexPA(arr, i)
-    def toArray = ???
+    def toArray = elem match {
+      case _: BaseElem[_] => ToArray(arr)
+      case _ => ToArray(arr)
+    }
     def slice(start:IntRep, len:IntRep) = SlicePA(arr, start, len)
     def map[C:Elem](f: Rep[A] => Rep[C]) = {
       val stub = arr
@@ -549,9 +556,9 @@ trait StagedImplementation extends StagedImplBase
   case class LengthPA[A](arr: PA[A]) extends Def[Int]
   case class IndexPA[A](arr: PA[A], i: IntRep) extends Def[A]
   case class SumPA[A](arr: PA[A], implicit val m: Monoid[A]) extends Def[A]
-  case class ScanPA[A:Elem](xs: PA[A], implicit val m: Monoid[A]) extends ExpStubArray[A] {
-    //def arr = this
-  }
+  case class ScanPA[A:Elem](xs: PA[A], implicit val m: Monoid[A]) extends ExpStubArray[A]
+  case class ToArray[A](arr: PA[A])(implicit val eA: Elem[A]) extends ArrayDef[A]
+
   // generates len elements: x1 = m.zero, x2 = x1 + step, x3 = x2 + step, ...
   case class GeneratePA[A:Elem](len: Rep[Int], step: Rep[A], implicit val m: Monoid[A]) extends ExpStubArray[A] {
     //def arr = this
@@ -559,9 +566,7 @@ trait StagedImplementation extends StagedImplBase
   case class ReplicatePA[A:Elem](count: IntRep, v: Rep[A]) extends ExpStubArray[A] {
     //def arr = this
   }
-  case class ReplicateSegPA[A:Elem](count: IntRep, v: PA[A]) extends ExpStubArray[A] {
-    //def arr = this
-  }
+  case class ReplicateSegPA[A](count: IntRep, v: PA[A])(implicit val eA: Elem[A]) extends ExpStubArray[A]
   case class ApplyPA[A:Elem, B:Elem](fs: PA[A=>B], args: PA[A]) extends ExpStubArray[B] {
     //def arr = this
   }
@@ -593,9 +598,7 @@ trait StagedImplementation extends StagedImplBase
     //def arr = this
   }
 
-  case class NestedArrayValues[A:Elem](nested: PA[PArray[A]]) extends ExpStubArray[A] {
-    //def arr = this
-  }
+  case class NestedArrayValues[A](nested: PA[PArray[A]])(implicit eA: Elem[A]) extends ExpStubArray[A]
   case class NestedArraySegments[A:Elem](nested: PA[PArray[A]]) extends ExpStubArray[(Int,Int)] {
     //def arr = this
   }
@@ -624,10 +627,20 @@ trait StagedImplementation extends StagedImplBase
     //def arr = this
   }
 
-  override def rewrite[T](d: Def[T]): Def[_] = d match {
-    case ExpIfArray(Def(Const(x)), Def(thenp), Def(elsep)) =>
-      x match { case true => thenp case _ => elsep }
+  override def mirror[A](d: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[_] = d match {
+    case x@ExpIfArray(c, t, e) => {
+      implicit val elem = x.eA; ExpIfArray(f(c), f(t/*.as[PArray[A]]*/), f(e/*.as[PArray[A]]*/))
+    }//(eA.asInstanceOf[Elem[Any]])
+    case _ => super.mirror(d, f)
+  }
 
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+    case ExpIfArray(Def(Const(x)), thenp, elsep) =>
+      x match { case true => thenp case _ => elsep }
+    case ExpStdArray(Def(ToArray(arr))) => arr
+    case ToArray(Def(ExpStdArray(arr))) => arr
+    case NestedArrayValues(Def(ExpNestedArray(arr, _))) => arr
+      
     case _ => super.rewrite(d)
   }
 }

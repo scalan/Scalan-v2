@@ -30,8 +30,10 @@ trait FractionalOpsExp extends FractionalOps with BaseExp { self: ArraysBase =>
   
   def fractional_divide[T](lhs: Exp[T], rhs: Exp[T])(implicit f: Fractional[T], et: Elem[T]) : Rep[T] = FractionalDivide(lhs, rhs, f)
 
-  override def rewrite[T](d: Def[T]): Def[_] = d match {
-    case FractionalDivide(Def(Const(x)), Def(Const(y)), f) => Const(f.div(x, y))
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]): Rep[_] = d match {
+    case FractionalDivide(Def(Const(x)), Def(Const(y)), f) => {
+      Const(f.div(x, y))
+    }
     case _ => super.rewrite(d)
   }
 

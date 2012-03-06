@@ -1,8 +1,8 @@
 package scala.virtualization.lms
 package common
 
-import internal.{Expressions, Effects, ScalaCodegen, ScalaNestedCodegen }
 import scalan.dsl.ArraysBase
+import internal._
 
 /**
  * Typeclass to lift values in arbitrary P[_]
@@ -30,6 +30,13 @@ trait Base extends EmbeddedControls
   //private[lms] def unit[T](x: T): Rep[T]
   //private[lms] implicit def constPure[T]: Pure[T, Rep]
   val isDebug: Boolean = false
+
+  trait AsRep {
+    def as[T]: Rep[T]
+  }
+  implicit def asRep(x: Rep[_]): AsRep = new AsRep {
+    def as[T]: Rep[T] = x.asInstanceOf[Rep[T]]
+  }
 }
 
 
@@ -38,7 +45,7 @@ trait Base extends EmbeddedControls
  *
  * @since 0.1
  */
-trait BaseExp extends Base with Expressions
+trait BaseExp extends Base with Expressions with Transforming
 { self: ArraysBase =>
 
   type Rep[+T] = Exp[T]

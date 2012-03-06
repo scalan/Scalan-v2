@@ -45,6 +45,7 @@ trait Expressions { self: ArraysBase =>
   case class Const[T](x: T) extends Def[T] {
     override def hashCode: Int = (41 + x.hashCode)
 
+    //TODO: this is a hack since direct pattern matching with arrays don't work as expected for some reason
     def matchArrayConst[A](arr: Def[_])
                        (ai: Array[Int] => A)
                        (af: Array[Float] => A)
@@ -81,8 +82,14 @@ trait Expressions { self: ArraysBase =>
     override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
   }
 
-  case class Sym[+T](val id: Int)(implicit et: Elem[T]) extends Exp[T] {
-    override def Elem: Elem[T @uncheckedVariance] = et //et.asInstanceOf[TypeInfo[T]]
+  /**
+   * A Sym is a symbolic reference used internally to refer to expressions.
+   */
+  object Sym { private var currId = 0 }
+  case class Sym[+T](id: Int = {Sym.currId += 1; Sym.currId})
+                    (implicit et: Elem[T]) extends Exp[T]
+  {
+    override def Elem: Elem[T @uncheckedVariance] = et
 
     override def toString = {
       val res = isDebug match {
@@ -102,6 +109,7 @@ trait Expressions { self: ArraysBase =>
     }
     lazy val definition = findDefinition(this).map(_.rhs)
   }
+  def fresh[T](implicit et: Elem[T]) = new Sym[T]()
 
   class TP[T](val sym: Sym[T], val definition: Option[Def[T]]) {
     def rhs: Def[T] = definition.getOrElse(evaluate)
@@ -132,23 +140,57 @@ trait Expressions { self: ArraysBase =>
     f
   }
 
-  var nVars = 0
-  def fresh[T](implicit et: Elem[T]) = new Sym[T]({ nVars += 1; nVars -1 })
+  def rewrite[T](d: Def[T])(implicit eT: Elem[T]): Exp[_] = {
+    rewriteRules.foreach(r =>
+      r.lift(d) match {
+        case Some(e) => return e
+        case _ =>
+      })
+    null
+  }
 
-  def rewrite[T](d: Def[T]): Def[_] = d
+  var rewriteRules = List[PartialFunction[Def[_], Exp[_]]]()
 
-  //def build
+  def addRules(rules: PartialFunction[Def[_], Exp[_]]) {
+    rewriteRules ::= rules
+  }
+  //def rewriteExp[T](e: Exp[T]): Exp[_] = e
+
+//  implicit def toExp[T](d: Def[T])(implicit et: Elem[T]): Exp[T] = {
+//    findDefinition(d) match {
+//      case Some(TP(s, _)) => s
+//      case None => {
+//        val TP(fsym, _) = createDefinition(fresh[T], d)
+//        var contender: Exp[T] = fsym
+//        var res = rewrite(contender).asInstanceOf[Exp[T]]
+//        while (res != contender) {
+//          contender = res
+//          res = rewrite(contender).asInstanceOf[Exp[T]]
+//        }
+//        res
+//      }
+//    }
+//  }
 
   implicit def toExp[T](d: Def[T])(implicit et: Elem[T]): Exp[T] = {
     findDefinition(d) match {
       case Some(TP(s, _)) => s
       case None =>
-        val newD = rewrite(d)
-        newD == d match {
-          case true =>
-            val TP(newSym, _) = createDefinition(fresh[T], d)
-            newSym
-          case _ => toExp(newD.asInstanceOf[Def[T]])
+        var ns = rewrite(d)
+        ns match {
+          case null =>
+            val TP(res, _) = createDefinition(fresh[T], d)
+            res
+          case _ => {
+            val res = ns match {
+              case Var(_) => ns
+              case Def(newD) => {
+                implicit val eAny = ns.Elem
+                toExp(newD)
+              }
+            }
+            res.asInstanceOf[Exp[T]]
+          }
         }
     }
   }
@@ -160,6 +202,10 @@ trait Expressions { self: ArraysBase =>
       case _ =>
         None
     }
+//    def unapply[T](e: Exp[T]): Option[(Def[T], Elem[T])] = {
+//      val d = unapply(e)
+//      (d, e.Elem)
+//    }
   }
   object Var {
     def unapply[T](e: Exp[T]): Option[Sym[T]] = e match {

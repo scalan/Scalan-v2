@@ -3,8 +3,8 @@ package scalan.samples
 import scalan.dsl.ScalanContext
 import scalan.common.Common
 import Common._
-import scalan.staged.StagedContext
 import scalan.sequential.{SequentialContext}
+import scalan.staged.StagedContext
 
 trait SeqViewSamples { self: ScalanContext =>
   import scalan._
@@ -45,33 +45,48 @@ trait StagedViewSamples extends SeqViewSamples { self: StagedContext =>
   import scalan._
 
   case class ExpPoint(x: Rep[Int], y: Rep[Int]) extends Def[Point]
-  case class PointProp(p: Rep[Point], propName: String) extends Def[Int]
-
-  class PointOps(p: Rep[Point]) {
-    def x: Rep[Int] = PointProp(p, "x")
-    def y: Rep[Int] = PointProp(p, "y")
+  trait PointOps {
+    def x(implicit e:Elem[Int]): Rep[Int]
+    def y(implicit e:Elem[Int]): Rep[Int]
   }
-  implicit def pimpPoint(p: Rep[Point]) = new PointOps(p)
+  implicit def repToPointOps(p: Rep[Point]): PointOps = proxyOps[Point, PointOps](p)
 
   object ExpPoint {
-
     class IsoExpPoint extends Point.IsoPoint with StagedIso[(Int, Int), Point] {
-      def fromStaged = (p: Rep[Point]) => p match {
-        case Def(ExpPoint(x, y)) => (x,y)
-        case _ => (p.x, p.y)
-      }
-
-      def toStaged = (p: Rep[(Int, Int)]) => p match {
-        case Def(Tup(x, y)) => toExp(ExpPoint(x,y))
-        case _ => ExpPoint(p._1, p._2)
-      }
+      def fromStaged = (p: Rep[Point]) => (p.x, p.y)
+      def toStaged = (p: Rep[(Int, Int)]) => ExpPoint(p._1, p._2)
     }
+    addRules({
+      case MethodCall(Def(ExpPoint(x,y)), "x", _) => x
+      case MethodCall(Def(ExpPoint(x,y)), "y", _) => y
+    })
   }
   implicit val isoPoint: Iso[(Int, Int), Point]
+
+  case class ExpCircle(loc: Rep[Point], rad: Rep[Int]) extends Def[Circle]
+  trait CircleOps {
+    def loc(implicit e:Elem[Point]): Rep[Point]
+    def rad(implicit e:Elem[Int]): Rep[Int]
+  }
+  implicit def repToCircleOps(x: Rep[Circle]): CircleOps = proxyOps[Circle, CircleOps](x)
+
+  object ExpCircle {
+    class IsoExpCircle extends Circle.IsoCircle with StagedIso[(Point, Int), Circle] {
+      def fromStaged = (x: Rep[Circle]) => (x.loc, x.rad)
+      def toStaged = (x: Rep[(Point, Int)]) => ExpCircle(x._1, x._2)
+    }
+    addRules({
+      case MethodCall(Def(ExpCircle(loc,_)), "loc", _) => loc
+      case MethodCall(Def(ExpCircle(_,rad)), "rad", _) => rad
+    })
+  }
+  implicit val isoCircle: Iso[(Point, Int), Circle]
+
 }
 
 trait StagedSampleImplicits extends StagedViewSamples { self: StagedContext =>
   import scalan._
 
   implicit lazy val isoPoint: Iso[(Int, Int), Point] = new ExpPoint.IsoExpPoint
+  implicit lazy val isoCircle: Iso[(Point, Int), Circle] = new ExpCircle.IsoExpCircle
 }

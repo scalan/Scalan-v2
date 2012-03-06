@@ -4,7 +4,7 @@
     <facet type="scala" name="Scala">
       <configuration>
         <option name="compilerLibraryLevel" value="Global" />
-        <option name="compilerLibraryName" value="nightly-scala-virtualized" />
+        <option name="compilerLibraryName" value="scala-virtualized-compiler" />
         <option name="compilerOptions" value="-Xlog-implicits" />
         <option name="deprecationWarnings" value="true" />
         <option name="explainTypeErrors" value="true" />
@@ -19,8 +19,8 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="nightly-scala-virtualized" level="application" />
     <orderEntry type="library" name="junit-4.10" level="application" />
+    <orderEntry type="library" name="scala-virtualized-compiler" level="application" />
     <orderEntry type="module" module-name="scalan" />
     <orderEntry type="module" module-name="scalan.samples" />
     <orderEntry type="sourceFolder" forTests="false" />

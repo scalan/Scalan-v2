@@ -18,10 +18,10 @@ trait PViews extends ArraysBase {
   implicit def viewElement[A,B](implicit iso: Iso[A,B], ea: Elem[A]): Elem[B]
 
   trait ViewArray[A, B] extends PArray[B] {
-    def a: PA[A]
+    def arr: PA[A]
     def iso: Iso[A, B]
-    def length = a.length
-    override def toDoc = group("ViewArray(" :: nest(2,a.toDoc) :/: ")" :: ED)
+    def length = arr.length
+    override def toDoc = group("ViewArray(" :: nest(2,arr.toDoc) :/: ")" :: ED)
   }
 
 

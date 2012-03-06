@@ -12,5 +12,7 @@ test-out/
 .idea/
 out/
 ._.DS_Store
-
-
+*.md~
+*.sbt~
+*.properties~
+*.scala~

@@ -16,6 +16,7 @@ trait Functions extends Base { self: ArraysBase =>
   implicit def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B]
   def mkApply[A:Elem,B:Elem](fun: Rep[A => B], arg: Rep[A]): Rep[B]
   def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
+  def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f)
 }
 
 trait FunctionsExp extends Functions with EffectExp { self: ArraysBase =>
@@ -82,7 +83,7 @@ trait FunctionsExp extends Functions with EffectExp { self: ArraysBase =>
     findDefinition(lam) match {
       case Some(TP(sym, Lambda(f, _, _))) => {
         f equals fun match {
-          case true => nVars -= 1; sym
+          case true => /*nVars -= 1;*/ sym
           case false =>
             createDefinition(res, lam)
             res
@@ -105,7 +106,7 @@ trait FunctionsExp extends Functions with EffectExp { self: ArraysBase =>
     findDefinition(lam) match {
       case Some(TP(sym, Lambda(f, _, _))) => {
         f equals fun match {
-          case true => nVars -= 1; sym
+          case true => /*nVars -= 1;*/ sym
           case false =>
             createDefinition(res, lam)
             res

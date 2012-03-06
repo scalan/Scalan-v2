@@ -48,7 +48,7 @@ trait OrderingOpsExp extends OrderingOps with BaseExp { self: ArraysBase =>
   def ordering_max[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMax(lhs,rhs,n)
   def ordering_min[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMin(lhs,rhs,n)
 
-  override def rewrite[T](d: Def[T]): Def[_] = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
     case OrderingLT(Def(Const(x)), Def(Const(y)), n) => Const(n.lt(x,y))
     case OrderingGT(Def(Const(x)), Def(Const(y)), n) => Const(n.gt(x,y))
     case OrderingLTEQ(Def(Const(x)), Def(Const(y)), n) => Const(n.lteq(x,y))
