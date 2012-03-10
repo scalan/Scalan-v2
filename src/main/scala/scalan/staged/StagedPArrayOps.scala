@@ -3,8 +3,21 @@ package scalan.staged
 import scalan.common.{Monoid, Semigroup}
 import text.Document
 import scalan.dsl.{Arrays, PArrayOps}
+import reflect.SourceContext
+import scala.virtualization.lms.common.BaseExp
+import scala.virtualization.lms.internal.Expressions
 
-trait StagedPArrayOps extends PArrayOps with PrimitivesLifting with Arrays { self: StagedImplementation =>
+trait StagedPArrayOps extends BaseExp
+                         with Expressions
+                         with PArrayOps
+                         with PrimitivesLifting
+                         with Arrays { self: StagedImplementation =>
+
+  class StagedBaseArrayOps[A](arr: PA[A]) extends BaseArrayOps[A] {
+    def itemElem: PArrayElem[A] = arr.Elem.asInstanceOf[PArrayElem[A]]
+  }
+  implicit def pimpBaseArray[A](p: PA[A]): BaseArrayOps[A] = new StagedBaseArrayOps(p)
+
   class StagedPairArrayOps[A:Elem,B:Elem](p: PA[(A,B)]) extends PairArrayOps[A,B] {
     def fst: PA[A] = FirstPA(p)
     def snd: PA[B] = SecondPA(p)
@@ -12,15 +25,8 @@ trait StagedPArrayOps extends PArrayOps with PrimitivesLifting with Arrays { sel
   implicit def pimpPairArray[A,B](p: PA[(A,B)])(implicit eA:Elem[A], eB:Elem[B]): PairArrayOps[A,B] = new StagedPairArrayOps(p)
 
   class StagedNestedArrayOps[A:Elem](nested: PA[PArray[A]]) extends NestedArrayOps[A] {
-    def values: PA[A] = nested match {
-      case Def(ExpNestedArray(xs, _)) => xs
-      case _ => NestedArrayValues(nested)
-    }
-
-    def segments: PA[(Int,Int)] = nested match {
-      case Def(ExpNestedArray(_, segs)) => segs
-      case _ => NestedArraySegments(nested)
-    }
+    def values: PA[A] = NestedArrayValues(nested)
+    def segments: PA[(Int,Int)] = NestedArraySegments(nested)
 
     def unzipNested: (PA[A], PA[(Int,Int)]) = (nested.values, nested.segments)
 
@@ -88,4 +94,18 @@ trait StagedPArrayOps extends PArrayOps with PrimitivesLifting with Arrays { sel
   }
   def nestArrays[A:Elem](a1: PA[A], a2: PA[A]):PA[PArray[A]] = NestArrays(a1, a2)
 
+  override def mirror[A](d: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[_] = d match {
+    case x@FirstPA(pa) => { implicit val elem = x.eA; FirstPA(f(pa)) }
+    case x@SecondPA(pa) => { implicit val elem = x.eB; FirstPA(f(pa)) }
+    case _ => super.mirror(d, f)
+  }
+
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+    case FirstPA(Def(ExpPairArray(a,b))) => a
+    case SecondPA(Def(ExpPairArray(a,b))) => a
+    case NestedArrayValues(Def(ExpNestedArray(xs, _))) => xs
+    case NestedArraySegments(Def(ExpNestedArray(_, segs))) => segs
+
+    case _ => super.rewrite(d)
+  }
 }

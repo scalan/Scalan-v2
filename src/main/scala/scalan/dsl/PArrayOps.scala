@@ -5,6 +5,11 @@ import scalan.common.{Monoid, Semigroup, PimpedType}
 
 trait PArrayOps extends ScalanBase { self: ArraysBase =>
 
+  trait BaseArrayOps[A] {
+    def itemElem: PArrayElem[A]
+  }
+  implicit def pimpBaseArray[A](p: PA[A]): BaseArrayOps[A]
+
   trait PairArrayOps[A,B] {
     def fst: PA[A]
     def snd: PA[B]

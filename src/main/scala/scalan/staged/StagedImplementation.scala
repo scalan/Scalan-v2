@@ -363,12 +363,13 @@ trait StagedImplementation extends StagedImplBase
     override def toString = "IfArray(" + cond.toString + "," + thenp.toString + "," + elsep.toString + "," + ")"
   }
 
-  case class ExpPairArray[A, B](a: PA[A], b: PA[B])(implicit ea: Elem[A], eb: Elem[B], e:Elem[(A,B)])
+  case class ExpPairArray[A, B](a: PA[A], b: PA[B])(implicit ea: Elem[A], eb: Elem[B])
      extends StagedArrayBase[(A,B)]
         with PairArray[A,B]
   {
-    override val elem = e
-    implicit val mab = e.manifest
+    private def eAB: Elem[(A,B)] = element[(A,B)]
+    override val elem = eAB
+    implicit val mab = eAB.manifest
 
     def toArray = {
       val _a = a.toArray; val _b = b.toArray
@@ -591,12 +592,8 @@ trait StagedImplementation extends StagedImplBase
   case class MapLiftedPA[A:Elem,B:Elem](source: PA[PArray[A]], lam: PA[A => B]) extends ExpStubArray[PArray[B]] {
     //def arr = this
   }
-  case class FirstPA[A:Elem,B](source: PA[(A,B)]) extends ExpStubArray[A] {
-    //def arr = this
-  }
-  case class SecondPA[A,B:Elem](source: PA[(A,B)]) extends ExpStubArray[B] {
-    //def arr = this
-  }
+  case class FirstPA[A,B](source: PA[(A,B)])(implicit val eA: Elem[A]) extends ExpStubArray[A]
+  case class SecondPA[A,B](source: PA[(A,B)])(implicit val eB: Elem[B]) extends ExpStubArray[B]
 
   case class NestedArrayValues[A](nested: PA[PArray[A]])(implicit eA: Elem[A]) extends ExpStubArray[A]
   case class NestedArraySegments[A:Elem](nested: PA[PArray[A]]) extends ExpStubArray[(Int,Int)] {
