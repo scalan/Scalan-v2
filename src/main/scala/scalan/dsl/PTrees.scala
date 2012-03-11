@@ -7,13 +7,13 @@ import scalan.common._
 import Common._
 
 trait PTrees extends ArraysBase {
-  case class Tree[A](value: A, children: PA[Tree[A]]) {
+  case class Tree[A](value: A, children: PArray[Tree[A]]) {
     def toDoc = group(("Tree(" + value + ",") :/: nest(2, children.toDoc) :: ")" :: ED)
   }
   object Tree {
     def apply[A](v: A)(implicit ea: Elem[A]) = new Tree(v, emptyArrayOf[Tree[A]])
   }
-  type Item[A] = (A, PA[Tree[A]])
+  type Item[A] = (A, PArray[Tree[A]])
 
   implicit def toTree[A](item: Rep[Item[A]]): Rep[Tree[A]]
 
@@ -36,7 +36,7 @@ trait PTrees extends ArraysBase {
 
   def toItems[A](ts: PA[Tree[A]]):Option[PA[Item[A]]]
 
-  def unzipTree[A](ts: PA[Tree[A]])(implicit ea: Elem[A], ept: Elem[PA[Tree[A]]]): (PA[A], PA[PA[Tree[A]]]) = {
+  def unzipTree[A](ts: PA[Tree[A]])(implicit ea: Elem[A], ept: Elem[PArray[Tree[A]]]): (PA[A], PA[PArray[Tree[A]]]) = {
     toItems(ts) match  {
       case Some(items) => unzip(items)
       case None => (ea.empty, ept.empty)

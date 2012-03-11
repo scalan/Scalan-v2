@@ -16,6 +16,10 @@ trait PArrayOps extends ScalanBase { self: ArraysBase =>
   }
   implicit def pimpPairArray[A,B](p: PA[(A,B)])(implicit eA:Elem[A], eB:Elem[B]): PairArrayOps[A,B]
 
+  trait SumArrayOps[A,B] {
+  }
+  implicit def pimpSumArray[A,B](p: PA[(A|B)])(implicit eA:Elem[A], eB:Elem[B]): SumArrayOps[A,B] = ???
+
   trait NestedArrayOps[A] {
     def values: PA[A]
     def segments: PA[(Int,Int)]

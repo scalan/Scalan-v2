@@ -50,4 +50,11 @@ class IsoLiftingTests extends TestContext
     }
   }
 
+  @Test def typeclassTests() {
+    val name = "typeclass"
+    withEmitException(name) {
+
+    }
+  }
+
 }

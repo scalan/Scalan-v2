@@ -102,7 +102,7 @@ trait StagedPArrayOps extends BaseExp
 
   override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
     case FirstPA(Def(ExpPairArray(a,b))) => a
-    case SecondPA(Def(ExpPairArray(a,b))) => a
+    case SecondPA(Def(ExpPairArray(a,b))) => b
     case NestedArrayValues(Def(ExpNestedArray(xs, _))) => xs
     case NestedArraySegments(Def(ExpNestedArray(_, segs))) => segs
 

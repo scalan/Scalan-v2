@@ -1,8 +1,8 @@
 package scala.virtualization.lms
 package internal
 
-import java.io.{PrintWriter, FileOutputStream}
 import scalan.dsl.ArraysBase
+import java.io.{File, PrintWriter, FileOutputStream}
 
 trait GraphVizExport extends Expressions with Scheduling { self: ArraysBase =>
 
@@ -23,8 +23,11 @@ trait GraphVizExport extends Expressions with Scheduling { self: ArraysBase =>
     emitDepGraph(dep(d), file, landscape)
   def emitDepGraph(start: Exp[Any], file: String, landscape: Boolean = false): Unit =
     emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: List[Exp[Any]], file: String, landscape: Boolean): Unit =
+  def emitDepGraph(ss: List[Exp[Any]], file: String, landscape: Boolean): Unit = {
+    val f = new File(file)
+    f.getParentFile.mkdirs()
     emitDepGraph(ss, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
+  }
 
   def emitDepGraph(ss: List[Exp[Any]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")

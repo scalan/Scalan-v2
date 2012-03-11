@@ -215,6 +215,7 @@ trait ArraysBase extends ScalanBase
 
   abstract class BaseElem[A] extends Element[A]
   abstract class PairElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A,B)]
+  abstract class SumElem [A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A|B)]
   abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
   abstract class PArrayElem[A](val ea: Elem[A]) extends Element[PArray[A]]
 

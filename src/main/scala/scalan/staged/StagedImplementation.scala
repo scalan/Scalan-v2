@@ -114,7 +114,56 @@ trait StagedImplementation extends StagedImplBase
     def toRep(p: (A,B)) = Pair(ea.toRep(p._1), eb.toRep(p._2))
   }
 
-  override implicit def sumElement [A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A|B)] = ???
+  override implicit def sumElement [A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A|B)] = ???
+//    new SumElem[A,B](elema, elemb) with StagedElement[(A|B)]
+//    {
+//      implicit val elemAB = this
+//      lazy val boolElem = element[Boolean]
+//      lazy val m: Manifest[(A|B)] = Manifest.classType(classOf[(A|B)], ea.manifest, eb.manifest)
+//      def zero = Common.zero(Left(ea.defaultOf))
+//      def manifest: Manifest[(A|B)] = m
+//
+//      def replicate(count: IntRep, v: Rep[(A|B)]) = {
+//        v.fold(
+//          a => {
+//            val as = ea.replicate(count, a)
+//            ExpSumArray(boolElem.replicate(count, false), as, eb.empty)
+//          },
+//          b => {
+//            val bs = eb.replicate(count, b)
+//            ExpSumArray(boolElem.replicate(count, true), ea.empty, bs)
+//          }
+//        )
+//      }
+//
+//      def replicateSeg(count: IntRep, v: PA[(A|B)]) = {
+//        val arr = v.asInstanceOf[SeqSumArray[A,B]]
+//        SeqSumArray(
+//          boolElem.replicateSeg(count, arr.flags),
+//          ea.replicateSeg(count, arr.a),
+//          eb.replicateSeg(count, arr.b))
+//      }
+//
+//      def tabulate(len: IntRep)(f:IntRep => (A|B)) = {
+//        val temp = Array.tabulate(len)(f)
+//        fromArray(temp)
+//      }
+//      def tabulateSeg(len: IntRep)(f:IntRep => PA[(A|B)]) = {
+//        val temp = Array.concat(Array.tabulate(len)(i => f(i).toArray): _*)
+//        fromArray(temp)
+//      }
+//      override def fromArray(arr: Array[(A|B)]) = {  //TODO implement using flagCombine
+//        val len = arr.length
+//        val flags = mkStdArray(len)(i => arr(i).isRight)
+//        val left = for (l <- arr; if l.isLeft) yield l.left.get
+//        val right = for (r <- arr; if r.isRight) yield r.right.get
+//
+//        SeqSumArray(flags, ea.tabulate(left.length)(i => left(i)), eb.tabulate(right.length)(i => right(i)))
+//      }
+//
+//      def empty = SeqSumArray(boolElem.empty, ea.empty, eb.empty)
+//    }
+
 
   override implicit def parrayElement[A](implicit eA: Elem[A]): Elem[PArray[A]] =
     new PArrayElem[A](eA) with StagedElement[PArray[A]] {
