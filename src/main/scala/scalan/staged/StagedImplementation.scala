@@ -14,6 +14,7 @@ trait StagedImplementation extends StagedImplBase
                               with StagedFunctions
                               with StagedArithmetic
                               with StagedLogical
+                              with StagedSumExp
                               with StagedStdArrayOps
                               with StagedPArrayOps
                               with ScalaOpsPkgExp
@@ -114,55 +115,49 @@ trait StagedImplementation extends StagedImplBase
     def toRep(p: (A,B)) = Pair(ea.toRep(p._1), eb.toRep(p._2))
   }
 
-  override implicit def sumElement [A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A|B)] = ???
-//    new SumElem[A,B](elema, elemb) with StagedElement[(A|B)]
-//    {
-//      implicit val elemAB = this
-//      lazy val boolElem = element[Boolean]
-//      lazy val m: Manifest[(A|B)] = Manifest.classType(classOf[(A|B)], ea.manifest, eb.manifest)
-//      def zero = Common.zero(Left(ea.defaultOf))
-//      def manifest: Manifest[(A|B)] = m
-//
-//      def replicate(count: IntRep, v: Rep[(A|B)]) = {
-//        v.fold(
-//          a => {
-//            val as = ea.replicate(count, a)
-//            ExpSumArray(boolElem.replicate(count, false), as, eb.empty)
-//          },
-//          b => {
-//            val bs = eb.replicate(count, b)
-//            ExpSumArray(boolElem.replicate(count, true), ea.empty, bs)
-//          }
-//        )
-//      }
-//
-//      def replicateSeg(count: IntRep, v: PA[(A|B)]) = {
-//        val arr = v.asInstanceOf[SeqSumArray[A,B]]
-//        SeqSumArray(
-//          boolElem.replicateSeg(count, arr.flags),
-//          ea.replicateSeg(count, arr.a),
-//          eb.replicateSeg(count, arr.b))
-//      }
-//
-//      def tabulate(len: IntRep)(f:IntRep => (A|B)) = {
-//        val temp = Array.tabulate(len)(f)
-//        fromArray(temp)
-//      }
-//      def tabulateSeg(len: IntRep)(f:IntRep => PA[(A|B)]) = {
-//        val temp = Array.concat(Array.tabulate(len)(i => f(i).toArray): _*)
-//        fromArray(temp)
-//      }
-//      override def fromArray(arr: Array[(A|B)]) = {  //TODO implement using flagCombine
-//        val len = arr.length
-//        val flags = mkStdArray(len)(i => arr(i).isRight)
-//        val left = for (l <- arr; if l.isLeft) yield l.left.get
-//        val right = for (r <- arr; if r.isRight) yield r.right.get
-//
-//        SeqSumArray(flags, ea.tabulate(left.length)(i => left(i)), eb.tabulate(right.length)(i => right(i)))
-//      }
-//
-//      def empty = SeqSumArray(boolElem.empty, ea.empty, eb.empty)
-//    }
+  override implicit def sumElement [A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A|B)] =
+    new SumElem[A,B](elema, elemb) with StagedElement[(A|B)]
+    {
+      implicit val elemAB = this
+      lazy val boolElem = element[Boolean]
+      lazy val m: Manifest[(A|B)] = Manifest.classType(classOf[(A|B)], ea.manifest, eb.manifest)
+      def zero = Common.zero(scala.Left(ea.defaultOf))
+      def manifest: Manifest[(A|B)] = m
+
+      def replicate(count: IntRep, v: Rep[(A|B)]) = {
+        v.fold(
+          a => {
+            val as = ea.replicate(count, a)
+            ExpSumArray(boolElem.replicate(count, false), as, eb.empty)
+          },
+          b => {
+            val bs = eb.replicate(count, b)
+            ExpSumArray(boolElem.replicate(count, true), ea.empty, bs)
+          }
+        )
+      }
+
+      def replicateSeg(count: IntRep, v: PA[(A|B)]) = {
+        ExpSumArray(
+          boolElem.replicateSeg(count, v.flags),
+          ea.replicateSeg(count, v.a),
+          eb.replicateSeg(count, v.b))
+      }
+
+      def tabulate(len: IntRep)(f:IntRep => Rep[(A|B)]) = {
+        val range: PA[Int] = RangePA(0, len)
+        range.mapSplit(fun(f))
+      }
+      def tabulateSeg(len: IntRep)(f:IntRep => PA[(A|B)]) = ???
+
+      override def fromArray(arr: Rep[Array[(A|B)]]) = {  //TODO implement using flagCombine
+        val len = arr.length
+        tabulate(len)(arr(_))
+      }
+
+      def empty = ExpSumArray(boolElem.empty, ea.empty, eb.empty)
+      def toRep(p: (A|B)) = p fold(l => Left[A,B](ea.toRep(l)), r => Right[A,B](eb.toRep(r)))
+    }
 
 
   override implicit def parrayElement[A](implicit eA: Elem[A]): Elem[PArray[A]] =
@@ -457,6 +452,71 @@ trait StagedImplementation extends StagedImplBase
     override def toString = "PairArray(" + a.toString + "," + b.toString + ")"
   }
 
+  case class ExpSumArray[A,B](val flags: PA[Boolean],  val a: PA[A], val b: PA[B])
+                             (implicit ea: Elem[A], eb: Elem[B])
+    extends StagedArrayBase[(A|B)]
+       with SumArray[A,B]
+  {
+    implicit private def eAB: Elem[(A|B)] = element[(A|B)]
+    override val elem = eAB
+    implicit val mab = eAB.manifest
+
+    lazy val indices: PA[Int] = {
+      val aindices = flags.map((b: BoolRep) => if (b) 0 else 1).scan
+      val bindices = flags.map((b: BoolRep) => if (b) 1 else 0).scan
+      bindices.flagCombine(aindices, flags)
+    }
+
+    def index(i: IntRep) = if (flags(i)) Right[A,B](b(indices(i))) else Left[A,B](a(indices(i)))
+    override def toArray = ArrayTabulate(flags.length, fun { index(_) })
+
+    def map[R:Elem](f: Rep[(A|B)] => Rep[R]): PA[R] = {
+      val len = length
+      element[R].tabulate(len)(i => f(index(i)))
+    }
+
+    def slice(start: IntRep, len: IntRep) = {
+      val fslice = flags.slice(start, len)
+      val islice = indices.slice(start, len)
+      val Pair(ib, ia) = islice.flagSplit(fslice)
+      ExpSumArray(fslice, sliceByIndices(a, ia), sliceByIndices(b, ib))
+    }
+
+    // length(this) + length(ifFalse) == length(flags)
+    override def flagMerge(ifFalse: PA[(A|B)], fs: PA[Boolean]) = ???
+//      ifFalse matchType {
+//      (arr: SeqSumArray[A,B]) => {
+//        val newFlags = this.flags.flagMerge(arr.flags, fs)
+//        val newIndices = this.indices.flagMerge(arr.indices, fs)
+//        fs.zip(newFlags).zip(newIndices) map {
+//          case ((isTrueArr,isB),i) =>
+//            if (isTrueArr) {
+//              if (isB) Right(b(i)) else Left(a(i))
+//            }
+//            else {
+//              if (isB) Right(arr.b(i)) else Left(arr.a(i))
+//            }
+//        }
+//      }
+//    }
+
+    // length(this) == length(flags) == (length(A) + length(B))
+    override def flagSplit  (fs: PA[Boolean]) = {
+      val Pair(trueFlags, falseFlags) = this.flags.flagSplit(fs)
+      val Pair(trueIndices, falseIndices) = this.indices.flagSplit(fs)
+      val trueArr: PA[(A|B)] = trueFlags.zip(trueIndices) map { case Pair(isB,i) => if (isB) Right[A,B](b(i)) else Left[A,B](a(i)) }
+      val falseArr: PA[(A|B)] = falseFlags.zip(falseIndices) map { case Pair(isB,i) => if (isB) Right[A,B](b(i)) else Left[A,B](a(i)) }
+      (trueArr, falseArr)
+    }
+
+    private def sliceByIndices[T:Elem](arr:PA[T], indices: PA[Int]): PA[T] = {
+      val len = indices.length
+      if (len == 0) return element[T].empty
+      val first = indices(0)
+      arr.slice(first, len)
+    }
+  }
+
   case class ExpNestedArray[A](val arr: PA[A], val segments: PA[(Int,Int)])
          (implicit ea: Elem[A], epa: Elem[PArray[A]])
           extends StagedArrayBase[PArray[A]] with NestedArray[A]
@@ -641,13 +701,7 @@ trait StagedImplementation extends StagedImplBase
   case class MapLiftedPA[A:Elem,B:Elem](source: PA[PArray[A]], lam: PA[A => B]) extends ExpStubArray[PArray[B]] {
     //def arr = this
   }
-  case class FirstPA[A,B](source: PA[(A,B)])(implicit val eA: Elem[A]) extends ExpStubArray[A]
-  case class SecondPA[A,B](source: PA[(A,B)])(implicit val eB: Elem[B]) extends ExpStubArray[B]
 
-  case class NestedArrayValues[A](nested: PA[PArray[A]])(implicit eA: Elem[A]) extends ExpStubArray[A]
-  case class NestedArraySegments[A:Elem](nested: PA[PArray[A]]) extends ExpStubArray[(Int,Int)] {
-    //def arr = this
-  }
   case class FlagMerge[A:Elem](ifTrue: PA[A], ifFalse: PA[A], flags: PA[Boolean]) extends ExpStubArray[A] {
     //def arr = this
   }

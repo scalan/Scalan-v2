@@ -13,8 +13,25 @@ trait StagedPArrayOps extends BaseExp
                          with PrimitivesLifting
                          with Arrays { self: StagedImplementation =>
 
+  case class FirstPA[A,B](source: PA[(A,B)])(implicit val eA: Elem[A]) extends ExpStubArray[A]
+  case class SecondPA[A,B](source: PA[(A,B)])(implicit val eB: Elem[B]) extends ExpStubArray[B]
+
+  case class NestedArrayValues[A](nested: PA[PArray[A]])(implicit eA: Elem[A]) extends ExpStubArray[A]
+  case class NestedArraySegments[A:Elem](nested: PA[PArray[A]]) extends ExpStubArray[(Int,Int)]
+
+  case class RangePA(start: IntRep, len: IntRep) extends ExpStubArray[Int]
+  case class GetLeftPA[A:Elem, B](sums: PA[(A|B)]) extends ExpStubArray[A]
+  case class GetRightPA[A, B:Elem](sums: PA[(A|B)]) extends ExpStubArray[B]
+  case class FlagsPA[A, B](sums: PA[(A|B)]) extends ExpStubArray[Boolean]
+  case class CollectLeftPA[A,B:Elem,C](xs: PA[A], func: Rep[A => (B|C)]) extends ExpStubArray[B]
+  case class CollectRightPA[A,B,C:Elem](xs: PA[A], func: Rep[A => (B|C)]) extends ExpStubArray[C]
+  case class MapSplit[A,B:Elem,C:Elem](xs: PA[A], func: Rep[A => (B|C)]) extends ExpStubArray[(B|C)]
+
   class StagedBaseArrayOps[A](arr: PA[A]) extends BaseArrayOps[A] {
-    def itemElem: PArrayElem[A] = arr.Elem.asInstanceOf[PArrayElem[A]]
+    def ArrayElem: PArrayElem[A] = arr.Elem.asInstanceOf[PArrayElem[A]]
+    def collectLeft[B:Elem,C](f: Rep[A => (B|C)]): PA[B] = CollectLeftPA(arr, f)
+    def collectRight[B,C:Elem](f: Rep[A => (B|C)]): PA[C] = CollectRightPA(arr, f)
+    def mapSplit[B:Elem,C:Elem](f: Rep[A => (B|C)]): PA[(B|C)] = MapSplit(arr, f)
   }
   implicit def pimpBaseArray[A](p: PA[A]): BaseArrayOps[A] = new StagedBaseArrayOps(p)
 
@@ -23,6 +40,13 @@ trait StagedPArrayOps extends BaseExp
     def snd: PA[B] = SecondPA(p)
   }
   implicit def pimpPairArray[A,B](p: PA[(A,B)])(implicit eA:Elem[A], eB:Elem[B]): PairArrayOps[A,B] = new StagedPairArrayOps(p)
+
+  class StagedSumArrayOps[A:Elem,B:Elem](p: PA[(A|B)]) extends SumArrayOps[A,B] {
+    def flags: PA[Boolean] = FlagsPA(p)
+    def a: PA[A] = GetLeftPA(p)
+    def b: PA[B] = GetRightPA(p)
+  }
+  implicit def pimpSumArray[A,B](p: PA[(A|B)])(implicit eA:Elem[A], eB:Elem[B]): SumArrayOps[A,B] = new StagedSumArrayOps(p)
 
   class StagedNestedArrayOps[A:Elem](nested: PA[PArray[A]]) extends NestedArrayOps[A] {
     def values: PA[A] = NestedArrayValues(nested)

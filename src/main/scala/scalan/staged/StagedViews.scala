@@ -218,14 +218,14 @@ trait StagedViews extends PViews
       ExpViewArray(arr, pIso)
     }
     case ExpPairArray(Def(v1@ExpViewArray(arr1, iso1)), arr2) => {
-      val iso2 = identityIso(arr2.itemElem.ea)
+      val iso2 = identityIso(arr2.ArrayElem.ea)
       val pIso = pairIso(iso1, iso2)
       val arr = ExpPairArray(arr1, arr2)(iso1.eA, iso2.eA)
       implicit val eAB = pIso.eB
       ExpViewArray(arr, pIso)
     }
     case ExpPairArray(arr2, Def(v1@ExpViewArray(arr1, iso1))) => {
-      val iso2 = identityIso(arr2.itemElem.ea)
+      val iso2 = identityIso(arr2.ArrayElem.ea)
       val pIso = pairIso(iso2, iso1)
       val arr = ExpPairArray(arr2, arr1)(iso2.eA, iso1.eA)
       implicit val eAB = pIso.eB

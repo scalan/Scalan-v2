@@ -327,15 +327,16 @@ trait SeqImplementation extends SeqImplBase {
     }
   }
 
-  case class SeqSumArray[A, B](_flags: PA[Boolean], _a: PA[A], _b: PA[B])
-      (implicit ea: Elem[A], eb: Elem[B], e: Elem[(A|B)]) extends SumArray[A, B]
-                                                             with SeqPArray[(A|B)]
+  case class SeqSumArray[A, B](val flags: PA[Boolean],  val a: PA[A], val b: PA[B])
+      (implicit ea: Elem[A], eb: Elem[B], e: Elem[(A|B)])
+    extends SumArray[A, B]
+       with SeqPArray[(A|B)]
   {
     override val elem = e
     //override val elem2 = element[((A|B),(A|B))]
-    def flags: PA[Boolean] = _flags
-    def a: PA[A] = _a
-    def b: PA[B] = _b
+//    def flags: PA[Boolean] = _flags
+//    def a: PA[A] = _a
+//    def b: PA[B] = _b
 
     lazy val indices: PA[Int] = {
       val aindices = flags.map((b: Boolean) => if (b) 0 else 1).scan

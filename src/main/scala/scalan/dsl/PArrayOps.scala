@@ -6,7 +6,10 @@ import scalan.common.{Monoid, Semigroup, PimpedType}
 trait PArrayOps extends ScalanBase { self: ArraysBase =>
 
   trait BaseArrayOps[A] {
-    def itemElem: PArrayElem[A]
+    def ArrayElem: PArrayElem[A]
+    def collectLeft[B:Elem,C](f: Rep[A => (B|C)]): PA[B]
+    def collectRight[B,C:Elem](f: Rep[A => (B|C)]): PA[C]
+    def mapSplit[B:Elem,C:Elem](f: Rep[A => (B|C)]): PA[(B|C)]
   }
   implicit def pimpBaseArray[A](p: PA[A]): BaseArrayOps[A]
 
@@ -17,8 +20,11 @@ trait PArrayOps extends ScalanBase { self: ArraysBase =>
   implicit def pimpPairArray[A,B](p: PA[(A,B)])(implicit eA:Elem[A], eB:Elem[B]): PairArrayOps[A,B]
 
   trait SumArrayOps[A,B] {
+    def flags: PA[Boolean]
+    def a: PA[A]
+    def b: PA[B]
   }
-  implicit def pimpSumArray[A,B](p: PA[(A|B)])(implicit eA:Elem[A], eB:Elem[B]): SumArrayOps[A,B] = ???
+  implicit def pimpSumArray[A,B](p: PA[(A|B)])(implicit eA:Elem[A], eB:Elem[B]): SumArrayOps[A,B]
 
   trait NestedArrayOps[A] {
     def values: PA[A]

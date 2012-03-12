@@ -187,7 +187,7 @@ trait ArraysBase extends ScalanBase
     override def toDoc = group("PairArray(" :: nest(2,a.toDoc) :: ", " :/: nest(2,b.toDoc) :/: ")" :: ED)
   }
 
-  trait SumArray[A, B] extends PArray[(A|B)] {
+  trait SumArray[A,B] extends PArray[(A|B)] {
     def flags: PA[Boolean]
     def a: PA[A]
     def b: PA[B]
