@@ -26,7 +26,9 @@ trait DslSamples extends Scalan {
     sum(sv map { case Pair(i,value) =>  v(i) * value })
     //sum(sv map { p => { val (i,value) = lift(p);  v(i) * value} })
 
-  def matrixVectorMul(mat: Rep[Matrix], vec: Rep[Vector]) = mat map {row => sparseVectorMul(row, vec)}
+  //def matrixVectorMul(mat: Rep[Matrix], vec: Rep[Vector]) = mat map {row => sparseVectorMul(row, vec)}
+  def matrixVectorMul(mat: Rep[Matrix], vec: Rep[Vector]) =
+     for (row <- mat) yield sparseVectorMul(row, vec)
 
   lazy val qsort = letrec((qs: Rep[PArray[Int] => PArray[Int]]) => (xs: PA[Int]) => {
     val len = xs.length

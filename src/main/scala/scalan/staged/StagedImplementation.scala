@@ -357,7 +357,8 @@ trait StagedImplementation extends StagedImplBase
     def length = len
     def toArray = ArrayFill(len, toRep(()))
     def map[R:Elem](f: UnitRep => Rep[R]): PA[R] = {
-      element[R].tabulate(len)(i => f(toRep(())))
+      val v = f(toRep(()))
+      element[R].replicate(len, v)
     }
 
     override def expandBy[B:Elem](nested: PA[PArray[B]]): PA[Unit] = nested match {
@@ -457,7 +458,7 @@ trait StagedImplementation extends StagedImplBase
     extends StagedArrayBase[(A|B)]
        with SumArray[A,B]
   {
-    implicit private def eAB: Elem[(A|B)] = element[(A|B)]
+    private def eAB: Elem[(A|B)] = element[(A|B)]
     override val elem = eAB
     implicit val mab = eAB.manifest
 

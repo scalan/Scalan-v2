@@ -231,6 +231,7 @@ trait StagedViews extends PViews
       implicit val eAB = pIso.eB
       ExpViewArray(arr, pIso)
     }
+    case ExpSumArray(_,_,_) => null
     case _ => ???("Don't know how to lift view from " + d, dep(d))
   }
 

@@ -15,10 +15,10 @@ trait StagedSumExp extends BaseExp
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends Def[Boolean]
 
-  case class FoldSum[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
+  case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
                              (implicit val eR: Elem[R]) extends Def[R]
 
-  case class FoldSumPA[A, B, R](sum: Exp[(A | B)],
+  case class SumFoldPA[A, B, R](sum: Exp[(A | B)],
                                 left: Exp[A => PArray[R]],
                                 right: Exp[B => PArray[R]])
                                (implicit val eR: Elem[R]) extends ExpStubArray[R]
@@ -27,8 +27,8 @@ trait StagedSumExp extends BaseExp
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = {
       val res: Rep[_] = element[R] match {
         case epaR: PArrayElem[_] =>
-          FoldSumPA(s, fun(l).as[A => PArray[R]], fun(r).as[B => PArray[R]])
-        case _ => FoldSum(s, fun(l), fun(r))
+          SumFoldPA(s, fun(l).as[A => PArray[R]], fun(r).as[B => PArray[R]])
+        case _ => SumFold(s, fun(l), fun(r))
       }
       res.as[R]
     }
@@ -41,10 +41,10 @@ trait StagedSumExp extends BaseExp
   implicit def pimpSum[A: Elem, B: Elem](p: Rep[(A | B)]): SumOps[A, B] = new SumOps(p)
 
   override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
-    case f@FoldSum(Def(Left(left)), l, _) => {
+    case f@SumFold(Def(Left(left)), l, _) => {
       implicit val eR = f.eR; mkApply(l, left)(left.Elem, eR)
     }
-    case f@FoldSum(Def(Right(right)), _, r) => {
+    case f@SumFold(Def(Right(right)), _, r) => {
       implicit val eR = f.eR; mkApply(r, right)(right.Elem, eR)
     }
     case IsLeft(Def(lr)) => lr.isInstanceOf[Left[_, _]]
