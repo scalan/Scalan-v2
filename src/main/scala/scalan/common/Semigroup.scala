@@ -43,7 +43,7 @@ object Semigroup extends SemigroupLow {
 
   implicit def BooleanSemigroup: Semigroup[Boolean] = semigroup("||", (a, b) => (a || b))
 
-//  implicit def CharSemigroup: Semigroup[Char] = semigroup((a, b) => (a + b).toChar)
+  implicit def CharSemigroup: Semigroup[Char] = semigroup("+", (a, b) => (a + b).toChar)
 //
 //  implicit def ByteSemigroup: Semigroup[Byte] = semigroup((a, b) => (a + b).toByte)
 //
