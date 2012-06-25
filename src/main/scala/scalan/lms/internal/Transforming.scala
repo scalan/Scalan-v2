@@ -29,6 +29,7 @@ trait Transforming extends Expressions with OverloadHack {
       case Some(y) if y != x => apply(y.asInstanceOf[Exp[A]])  // transitive closure
       case _ => x
     }
+    def +=(kv: (Exp[Any], Exp[Any])) = subst += kv
   }
 
   class MapTransformer(val subst: Map[Exp[Any], Exp[Any]])
