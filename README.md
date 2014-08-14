@@ -1,5 +1,6 @@
 ### How to build:
 
+
 1. Download and build [`scala-virtualized`](http://github.com/TiarkRompf/scala-virtualized).
 2. In a file `local.properties` in the root project directory, set the following property to your specific location
 
